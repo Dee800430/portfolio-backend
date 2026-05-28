@@ -1,0 +1,18 @@
+spring:
+  application:
+  datasource:
+   url: jdbc:mysql://localhost:3306/portdb
+   username: root
+   password: root
+   driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+      dialect: org.hibernate.dialect.MySQL8Dialect
+cloudinary:
+  cloud-name: dmjpeq1n8
+  api-key: 766163367951514
+  api-secret: 8HVf8M-BxZ1lZz9czr2KLyWuY5o
+jwt:
+  secret: deepanshuranaportfoliojwtsecretkey2026secure
