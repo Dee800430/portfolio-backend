@@ -19,7 +19,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -37,70 +36,66 @@ public class JwtFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        final String authHeader =
-                request.getHeader("Authorization");
+        String path = request.getServletPath();
 
-        String username = null;
-        String token = null;
-
-        if(authHeader != null &&
-                authHeader.startsWith("Bearer ")) {
-
-            token = authHeader.substring(7);
-
-            Claims claims = getClaims(token);
-
-            username = claims.getSubject();
+        // =========================
+        // SKIP AUTH ENDPOINTS
+        // =========================
+        if (path.startsWith("/auth/")) {
+            filterChain.doFilter(request, response);
+            return;
         }
 
-        if(username != null &&
-                SecurityContextHolder
-                        .getContext()
-                        .getAuthentication() == null) {
+        String authHeader = request.getHeader("Authorization");
+        String username = null;
+        String token = null;
+        Claims claims = null;
+
+        try {
+
+            if (authHeader != null && authHeader.startsWith("Bearer ")) {
+
+                token = authHeader.substring(7);
+                claims = getClaims(token);
+                username = claims.getSubject();
+            }
+
+        } catch (Exception e) {
+            // invalid token → just continue without auth
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        if (username != null &&
+                SecurityContextHolder.getContext().getAuthentication() == null) {
 
             UserDetails userDetails =
-                    customUserService
-                            .loadUserByUsername(username);
+                    customUserService.loadUserByUsername(username);
 
             UsernamePasswordAuthenticationToken authToken =
                     new UsernamePasswordAuthenticationToken(
                             userDetails,
-                            claimsPrincipal(userDetails, token),
+                            null,
                             userDetails.getAuthorities()
                     );
 
             authToken.setDetails(
-                    new WebAuthenticationDetailsSource()
-                            .buildDetails(request)
+                    new WebAuthenticationDetailsSource().buildDetails(request)
             );
 
-            SecurityContextHolder
-                    .getContext()
-                    .setAuthentication(authToken);
+            SecurityContextHolder.getContext().setAuthentication(authToken);
         }
 
         filterChain.doFilter(request, response);
     }
 
-    private Map<String, Object> claimsPrincipal(UserDetails userDetails, String token) {
-
-        Claims claims = getClaims(token);
-
-        return Map.of(
-                "username", userDetails.getUsername(),
-                "userId", claims.get("userId", Long.class)
-        );
-    }
-
+    // =========================
+    // EXTRACT CLAIMS
+    // =========================
     private Claims getClaims(String token) {
 
         return Jwts.parser()
-                .verifyWith(
-                        Keys.hmacShaKeyFor(
-                                secret.getBytes(StandardCharsets.UTF_8)
-                        )
-                )
-                .build()
+                .setSigningKey(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
                 .parseClaimsJws(token)
                 .getBody();
     }

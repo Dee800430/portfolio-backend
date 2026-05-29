@@ -1,6 +1,5 @@
 package com.back.conifig;
 
-
 import com.back.service.CustomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -26,88 +25,96 @@ import java.util.List;
 public class SecurityConfig {
 
     private final CustomService customUserService;
-
     private final JwtFilter jwtFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
         http
+                // ❌ Disable CSRF for REST APIs
                 .csrf(csrf -> csrf.disable())
 
+                // ✅ Enable CORS
                 .cors(Customizer.withDefaults())
+
+                // ❌ No sessions (JWT based auth)
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
                 .authorizeHttpRequests(auth -> auth
 
-                        // PUBLIC APIs
-                        .requestMatchers("/auth/login")
-                        .permitAll()
+                        // =========================
+                        // PUBLIC AUTH APIs
+                        // =========================
+                        .requestMatchers("/auth/**").permitAll()
 
+                        // =========================
+                        // PROJECT APIs
+                        // =========================
+                        .requestMatchers(HttpMethod.GET, "/api/project/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/project/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/project/**").authenticated()
 
-                        .requestMatchers(HttpMethod.GET, "/api/project/**")
-                        .permitAll()
+                        // =========================
+                        // CONTACT APIs
+                        // =========================
+                        .requestMatchers(HttpMethod.GET, "/api/contact/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/contact/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/contact/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/contact/**").authenticated()
 
-                        .requestMatchers(HttpMethod.POST, "/api/project/**")
-                        .authenticated()
+                        // =========================
+                        // PROFILE APIs
+                        // =========================
+                        .requestMatchers("/api/profile/public").permitAll()
+                        .requestMatchers("/api/profile/**").authenticated()
 
-                        .requestMatchers(HttpMethod.DELETE, "/api/project/**")
-                        .authenticated()
-
-                        .requestMatchers(HttpMethod.GET, "/api/contact/**")
-                        .permitAll()
-
-                        .requestMatchers(HttpMethod.POST, "/api/contact/**")
-                        .permitAll()
-
-                        .requestMatchers(HttpMethod.PUT, "/api/contact/**")
-                        .authenticated()
-
-                        .requestMatchers(HttpMethod.DELETE, "/api/contact/**")
-                        .authenticated()
-
-                        .requestMatchers(HttpMethod.GET, "/api/profile/public")
-                        .permitAll()
-
-                        .requestMatchers("/api/profile/**")
-                        .authenticated()
-
+                        // =========================
                         // ADMIN APIs
-                        .requestMatchers("/api/admin/**")
-                        .hasRole("ADMIN")
+                        // =========================
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // EVERYTHING ELSE
-                        .anyRequest()
-                        .permitAll()
+                        // =========================
+                        // DEFAULT
+                        // =========================
+                        .anyRequest().authenticated()
                 )
 
+                // User details service
                 .userDetailsService(customUserService)
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
+                // JWT filter
+                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
+    // =========================
+    // PASSWORD ENCODER
+    // =========================
     @Bean
     public PasswordEncoder passwordEncoder() {
-
         return new BCryptPasswordEncoder();
     }
 
+    // =========================
+    // AUTH MANAGER
+    // =========================
     @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration config
     ) throws Exception {
-
         return config.getAuthenticationManager();
     }
+
+    // =========================
+    // CORS CONFIG
+    // =========================
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration configuration =
-                new CorsConfiguration();
+        CorsConfiguration configuration = new CorsConfiguration();
 
         configuration.setAllowedOrigins(List.of(
                 "http://localhost:3000",
@@ -115,11 +122,7 @@ public class SecurityConfig {
         ));
 
         configuration.setAllowedMethods(List.of(
-                "GET",
-                "POST",
-                "PUT",
-                "DELETE",
-                "OPTIONS"
+                "GET", "POST", "PUT", "DELETE", "OPTIONS"
         ));
 
         configuration.setAllowedHeaders(List.of("*"));
@@ -129,10 +132,7 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source =
                 new UrlBasedCorsConfigurationSource();
 
-        source.registerCorsConfiguration(
-                "/**",
-                configuration
-        );
+        source.registerCorsConfiguration("/**", configuration);
 
         return source;
     }
