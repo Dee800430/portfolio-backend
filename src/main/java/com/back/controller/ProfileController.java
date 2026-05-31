@@ -37,7 +37,7 @@ public class ProfileController {
     }
 
     @GetMapping("/public")
-    public Profile getPublicProfile() {
+    public Profile getPublicProfile(Authentication authentication) {
         return profileService.findPublicProfile();
     }
 

@@ -69,8 +69,10 @@ public class SecurityConfig {
                         // =========================
                         .requestMatchers("/api/profile/public").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/profile/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/profile/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/profile/**").authenticated()
 
-                        .requestMatchers("/api/profile/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE,"/api/profile/**").authenticated()
 
                         // =========================
                         // ADMIN APIs
