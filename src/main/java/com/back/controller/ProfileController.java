@@ -72,12 +72,13 @@ public class ProfileController {
         if (profile == null) {
             return ResponseEntity.badRequest().body("Profile not found");
         }
-
+        List<String> skillsList =
+                Arrays.asList(profile.getSkills().split(","));
         profile.setFullName(fullName);
         profile.setEmail(email);
         profile.setMobile(mobile);
         profile.setAbout(about);
-        profile.setSkills(skills);
+        profile.setSkills(String.join(",", skillsList)  );
 
         profile.setExperience(experience);
         profile.setGithubUrl(githubUrl);
