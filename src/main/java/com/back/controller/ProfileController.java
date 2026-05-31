@@ -52,7 +52,7 @@ public class ProfileController {
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String mobile,
             @RequestParam String about,
-            @RequestParam List<String> skills,
+            @RequestParam(required = false) List<String> skills,
             @RequestParam String experience,
             @RequestParam String githubUrl,
             @RequestParam String linkedinUrl,
@@ -72,14 +72,12 @@ public class ProfileController {
         if (profile == null) {
             return ResponseEntity.badRequest().body("Profile not found");
         }
-        List<String> skillsList =
-                Arrays.asList(profile.getSkills().split(","));
+
         profile.setFullName(fullName);
         profile.setEmail(email);
         profile.setMobile(mobile);
         profile.setAbout(about);
-        profile.setSkills(String.join(",", skillsList)  );
-
+        profile.setSkills(skills == null ? "" : String.join(",", skills));
         profile.setExperience(experience);
         profile.setGithubUrl(githubUrl);
         profile.setLinkedinUrl(linkedinUrl);
