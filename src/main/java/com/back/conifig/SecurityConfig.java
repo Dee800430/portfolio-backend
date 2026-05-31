@@ -68,6 +68,8 @@ public class SecurityConfig {
                         // PROFILE APIs
                         // =========================
                         .requestMatchers("/api/profile/public").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/profile/**").permitAll()
+
                         .requestMatchers("/api/profile/**").authenticated()
 
                         // =========================
