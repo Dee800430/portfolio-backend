@@ -1,6 +1,8 @@
 package com.back.controller;
 
 import com.back.entity.Project;
+import com.back.entity.User;
+import com.back.repository.UserRepo;
 import com.back.service.CloudinaryService;
 import com.back.service.ProjectService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,6 +26,8 @@ public class ProjectController {
 
     @Autowired
     private  CloudinaryService cloudinaryService;
+
+    private final UserRepo userRepo;
 
 
     @GetMapping
@@ -107,22 +112,20 @@ public class ProjectController {
 
     private Long getUserId(Authentication authentication) {
 
-        if (authentication == null || !(authentication.getCredentials() instanceof Map<?, ?> claims)) {
-            throw new RuntimeException("Authenticated userId not found");
+        if (authentication == null) {
+            throw new RuntimeException("User not authenticated");
         }
 
-        Object userId = claims.get("userId");
+        UserDetails userDetails =
+                (UserDetails) authentication.getPrincipal();
 
-        if (userId instanceof Long id) {
-            return id;
-        }
+        String username = userDetails.getUsername();
 
-        if (userId instanceof Number id) {
-            return id.longValue();
-        }
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
 
-        throw new RuntimeException("Authenticated userId not found");
+        return user.getUserId();
     }
-
 
 }

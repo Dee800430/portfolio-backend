@@ -1,11 +1,14 @@
 package com.back.controller;
 
 import com.back.entity.Contact;
+import com.back.entity.User;
+import com.back.repository.UserRepo;
 import com.back.service.ContactService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +20,7 @@ import java.util.Map;
 public class ContactController {
 
     private final ContactService contactService;
+    private  final UserRepo userRepo;
 
     @GetMapping
     public List<Contact> getAllContacts() {
@@ -68,24 +72,22 @@ public class ContactController {
     }
 
 
-    private Long getUserId(org.springframework.security.core.Authentication authentication) {
+    private Long getUserId(Authentication authentication) {
 
-        if (authentication == null || !(authentication.getCredentials() instanceof Map<?, ?> claims)) {
-            throw new RuntimeException("Authenticated userId not found");
+        if (authentication == null) {
+            throw new RuntimeException("User not authenticated");
         }
 
-        Object userId = claims.get("userId");
+        UserDetails userDetails =
+                (UserDetails) authentication.getPrincipal();
 
-        if (userId instanceof Long id) {
-            return id;
-        }
+        String username = userDetails.getUsername();
 
-        if (userId instanceof Number id) {
-            return id.longValue();
-        }
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() ->
+                        new RuntimeException("User not found"));
 
-        throw new RuntimeException("Authenticated userId not found");
+        return user.getUserId();
     }
-
 
 }

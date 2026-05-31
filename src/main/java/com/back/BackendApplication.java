@@ -1,6 +1,11 @@
 package com.back;
 
+import com.back.entity.Contact;
+import com.back.entity.Profile;
 import com.back.entity.User;
+import com.back.repository.ContactRepository;
+import com.back.repository.ProfileRepository;
+import com.back.repository.ProjectRepository;
 import com.back.repository.UserRepo;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -20,7 +25,10 @@ public class BackendApplication {
     @Bean
     CommandLineRunner createDefaultUser(
             UserRepo userRepo,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            ProfileRepository profileRepository,
+            ContactRepository contactRepository,
+            ProjectRepository projectRepository
     ) {
 
         return args -> {
@@ -29,17 +37,23 @@ public class BackendApplication {
 
             Optional<User> existingUser = userRepo.findByUsername(username);
 
-            if (existingUser == null) {
+            if (existingUser.isEmpty()) {
 
                 User user = new User();
+                Profile profile = new Profile();
+               Contact  contact = new Contact();
 
                 user.setUsername("admin");
                 user.setPassword(
                         passwordEncoder.encode("admin123")
                 );
-                user.setRole("ADMIN");
+                user.setRole("ROLE_ADMIN");
 
-                userRepo.save(user);
+               User u1 =  userRepo.save(user);
+               profile.setUserId(u1.getUserId());
+               profileRepository.save(profile);
+               contact.setUserId(u1.getUserId());
+               contactRepository.save(contact);
 
                 System.out.println("Default Admin Created");
             } else {
