@@ -2,6 +2,7 @@ package com.back;
 
 import com.back.entity.Contact;
 import com.back.entity.Profile;
+import com.back.entity.Project;
 import com.back.entity.User;
 import com.back.repository.ContactRepository;
 import com.back.repository.ProfileRepository;
@@ -42,6 +43,7 @@ public class BackendApplication {
                 User user = new User();
                 Profile profile = new Profile();
                Contact  contact = new Contact();
+               Project project = new Project();
 
                 user.setUsername("admin");
                 user.setPassword(
@@ -50,6 +52,8 @@ public class BackendApplication {
                 user.setRole("ROLE_ADMIN");
 
                User u1 =  userRepo.save(user);
+               project.setUserId(u1.getUserId());
+               projectRepository.save(project);
                profile.setUserId(u1.getUserId());
                profileRepository.save(profile);
                contact.setUserId(u1.getUserId());
