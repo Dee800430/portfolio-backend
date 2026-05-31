@@ -32,6 +32,7 @@ public class ProfileController {
 
     @GetMapping
     public Profile getProfile(Authentication authentication) {
+        System.out.println("getProfile"+authentication.getPrincipal());
         return profileService.findByUserId(getUserId(authentication));
 
     }
